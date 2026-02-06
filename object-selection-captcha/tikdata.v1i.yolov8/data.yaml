@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 8
+names: ['chu_khoi', 'da_giac', 'dia_sao', 'hinh_cau', 'lap_phuong', 'non', 'so_khoi', 'tru']
+
+roboflow:
+  workspace: objectselection
+  project: tikdata-nalrc
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/objectselection/tikdata-nalrc/dataset/1

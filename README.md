@@ -139,9 +139,45 @@ pytest tests/ -v
 
 Scraper tests are inherently brittle (DOM/HTML can change); the suite is designed so parsing and business logic are well covered by unit tests, and only the orchestration is tested with mocks.
 
+## CAPTCHA solver (object selection)
+
+The scraper can try to **auto-solve** image-based “select all X” CAPTCHAs using a local YOLOv8 model (no external API). It is **optional** and only runs if the `captcha` package and its dependencies are installed.
+
+### How powerful is it?
+
+| Factor | Reality |
+|--------|--------|
+| **Object coverage** | Only the **80 COCO classes** (traffic lights, buses, bicycles, cars, fire hydrants, stop signs, etc.). Prompts like “crosswalk”, “chimney”, “palm tree” have **no** mapping and will fail unless we add heuristics or CLIP. |
+| **Success rate (when it applies)** | On **grid** CAPTCHAs with clear images and a known prompt, expect roughly **50–80%** per attempt: YOLO can miss small or occluded objects, and tile boundaries / IoU thresholds can misassign. **Click** CAPTCHAs (single image, “click the X”) are often **60–90%** when the object is obvious. |
+| **TikTok specifically** | TikTok uses **slider**, **rotation**, and **object-selection** CAPTCHAs. We only solve **object-selection** (grid or click). Slider and “rotate the image” are **not** implemented; those still need manual solve or `--no-headless`. |
+| **Detection vs site layout** | Even when our model picks the right tiles, **site DOM** must match what we expect (e.g. reCAPTCHA-style containers and tile selectors). TikTok’s own CAPTCHA markup may differ; if our selectors don’t find the grid, the solver won’t run. |
+
+**Summary:** Useful for generic “select all traffic lights / buses / bicycles” challenges on sites that use standard patterns. Not a silver bullet; expect failures and fall back to manual solve when needed.
+
+### How to test it
+
+1. **Detection only (no browser)** – see what the model would click on any image:
+   ```bash
+   python scratch/run_captcha_detection_demo.py path/to/image.jpg
+   # or with a URL:
+   python scratch/run_captcha_detection_demo.py "https://example.com/grid.jpg" --output result.png
+   ```
+   Prints detected objects and (optionally) saves an image with bounding boxes.
+
+2. **Full flow in browser** – local fake CAPTCHA page, solver runs end-to-end:
+   ```bash
+   python scratch/run_captcha_e2e_demo.py
+   ```
+   Opens a 3×3 grid page in Chrome, runs the solver, and reports whether it “passed”.
+
+3. **Live scraper** – run the scraper; when a CAPTCHA appears it will try to solve it (disable with `--no-captcha-solve` if you prefer to solve manually):
+   ```bash
+   python scraper.py "https://www.tiktok.com/@user/video/123" --no-headless
+   ```
+
 ## Notes
 
-- TikTok may show a slider puzzle captcha. If this happens, run with `--no-headless` and solve it manually once.
+- TikTok may show a **slider** or **rotation** captcha; those are not auto-solved. Run with `--no-headless` and solve manually if needed.
 - The scraper handles cookie banners automatically.
 - Comments are loaded dynamically, so the scraper scrolls and waits for them to appear.
 - Video and audio URLs may expire after some time.

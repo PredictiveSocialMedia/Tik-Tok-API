@@ -60,6 +60,7 @@ def scrape_tiktok_post(
     max_comments: int = 10,
     download_video_path: Optional[str] = None,
     download_audio_path: Optional[str] = None,
+    solve_captcha: bool = True,
 ) -> dict:
     """
     Scrape a single TikTok post by URL.
@@ -76,6 +77,9 @@ def scrape_tiktok_post(
         Maximum top-level comments to return.
     download_video_path / download_audio_path : str, optional
         Save video / audio to these file paths.
+    solve_captcha : bool
+        Attempt to auto-solve CAPTCHAs using the ``captcha`` package
+        (requires ``ultralytics``). Defaults to ``True``.
 
     Returns
     -------
@@ -90,7 +94,7 @@ def scrape_tiktok_post(
 
     try:
         # ── Load page & extract JSON ────────────────────────────────
-        html = load_tiktok_video_page(driver, video_url)
+        html = load_tiktok_video_page(driver, video_url, solve_captcha=solve_captcha)
         data = extract_rehydration_json(html)
         if not data:
             return _fail(video_url, "Could not find __UNIVERSAL_DATA_FOR_REHYDRATION__ on page")
@@ -195,6 +199,10 @@ def main() -> None:
     )
     parser.add_argument("--download-video", metavar="PATH", help="Download video to PATH")
     parser.add_argument("--download-audio", metavar="PATH", help="Download audio/music to PATH")
+    parser.add_argument(
+        "--no-captcha-solve", action="store_true",
+        help="Disable automatic CAPTCHA solving",
+    )
     parser.add_argument("--output", "-o", metavar="FILE", help="Write JSON result to FILE")
     args = parser.parse_args()
 
@@ -204,6 +212,7 @@ def main() -> None:
         max_comments=args.comments,
         download_video_path=args.download_video,
         download_audio_path=args.download_audio,
+        solve_captcha=not args.no_captcha_solve,
     )
 
     if args.output:

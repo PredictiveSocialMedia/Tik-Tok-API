@@ -1,0 +1,19 @@
+names:
+- chu_khoi
+- da_giac
+- dia_sao
+- hinh_cau
+- lap_phuong
+- non
+- so_khoi
+- tru
+nc: 8
+roboflow:
+  license: CC BY 4.0
+  project: tikdata-nalrc
+  url: https://universe.roboflow.com/objectselection/tikdata-nalrc/dataset/1
+  version: 1
+  workspace: objectselection
+test: /Users/ayoisthegoat/Desktop/Education/Chatbots/Tik-Tok/Tik-Tok-API/captcha/tikdata.v1i.yolov8/test/images
+train: /Users/ayoisthegoat/Desktop/Education/Chatbots/Tik-Tok/Tik-Tok-API/captcha/tikdata.v1i.yolov8/train/images
+val: /Users/ayoisthegoat/Desktop/Education/Chatbots/Tik-Tok/Tik-Tok-API/captcha/tikdata.v1i.yolov8/valid/images

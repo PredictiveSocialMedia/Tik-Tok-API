@@ -110,9 +110,18 @@ def create_driver(headless: bool = True) -> webdriver.Chrome:
 
 
 def load_tiktok_video_page(
-    driver: webdriver.Chrome, video_url: str, wait_seconds: int = 10
+    driver: webdriver.Chrome,
+    video_url: str,
+    wait_seconds: int = 10,
+    solve_captcha: bool = True,
 ) -> str:
-    """Navigate to a TikTok video URL and return the rendered page source."""
+    """
+    Navigate to a TikTok video URL and return the rendered page source.
+
+    If *solve_captcha* is ``True`` (default) and the ``captcha`` package is
+    installed, any blocking CAPTCHA will be detected and solved automatically
+    before returning the page source.
+    """
     driver.get(video_url)
     try:
         WebDriverWait(driver, wait_seconds).until(
@@ -126,6 +135,19 @@ def load_tiktok_video_page(
             EC.presence_of_element_located((By.TAG_NAME, "script"))
         )
     time.sleep(2)
+
+    # ── CAPTCHA handling ─────────────────────────────────────────────
+    if solve_captcha:
+        try:
+            from captcha import handle_captcha
+
+            solved = handle_captcha(driver, max_attempts=3)
+            if solved:
+                # Re-wait for the page content after the CAPTCHA clears
+                time.sleep(1)
+        except ImportError:
+            pass  # captcha package not installed – skip silently
+
     return driver.page_source
 
 
