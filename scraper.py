@@ -78,7 +78,7 @@ def scrape_tiktok_post(
     download_video_path / download_audio_path : str, optional
         Save video / audio to these file paths.
     solve_captcha : bool
-        Attempt to auto-solve CAPTCHAs using the ``captcha`` package
+        Attempt to auto-solve CAPTCHAs using the ``object_selection_captcha`` package
         (requires ``ultralytics``). Defaults to ``True``.
 
     Returns

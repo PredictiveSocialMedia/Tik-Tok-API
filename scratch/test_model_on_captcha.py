@@ -30,13 +30,8 @@ from pathlib import Path
 # Add project root to path so imports work
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-# Allow "captcha" to resolve to "object-selection-captcha"
-CAPTCHA_PKG = PROJECT_ROOT / "object-selection-captcha"
-if CAPTCHA_PKG.is_dir() and not (PROJECT_ROOT / "captcha").exists():
-    sys.modules.setdefault("captcha", None)  # clear if needed
-    import importlib
-    # Add as captcha
-    sys.path.insert(0, str(CAPTCHA_PKG.parent))
+# Implementation package
+CAPTCHA_PKG = PROJECT_ROOT / "object_selection_captcha"
 
 import cv2
 import numpy as np
@@ -63,7 +58,7 @@ def get_test_images() -> list[Path]:
 
 def run_yolo_solver(image: Image.Image) -> dict:
     """Run the YOLO-based solver and return results."""
-    from captcha.tiktok_detector import detect_tiktok_objects, find_matching_pair_yolo
+    from object_selection_captcha.tiktok_detector import detect_tiktok_objects, find_matching_pair_yolo
 
     detections = detect_tiktok_objects(image, confidence_threshold=0.25)
     pair = find_matching_pair_yolo(image, confidence_threshold=0.25)
@@ -77,7 +72,7 @@ def run_yolo_solver(image: Image.Image) -> dict:
 
 def run_classical_solver(image: Image.Image) -> dict:
     """Run the classical contour-based solver and return results."""
-    from captcha.shape_solver import find_matching_pair
+    from object_selection_captcha.shape_solver import find_matching_pair
 
     pair = find_matching_pair(image, use_yolo=False)
 

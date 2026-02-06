@@ -12,10 +12,10 @@ puzzle.
 Strategy (two tiers)
 --------------------
 **Tier 1 — Fine-tuned YOLO (preferred)**:
-If a custom-trained YOLOv8 model exists at ``captcha/models/tiktok_captcha_best.pt``,
+If a custom-trained YOLO model exists at ``object_selection_captcha/models/tiktok_captcha_best.pt``,
 it is used to classify each object by label (e.g. "A", "7", "star").
 Two objects with the same label are the matching pair.  Train the model with
-``python -m captcha.train_tiktok_model``.
+``python -m object_selection_captcha.train_tiktok_model``.
 
 **Tier 2 — Classical contour analysis (fallback)**:
 1. Segment individual objects from the light background using colour
@@ -465,16 +465,16 @@ def _try_yolo(
 ) -> Optional[tuple[tuple[int, int], tuple[int, int]]]:
     """Attempt YOLO-based matching. Returns None if unavailable or fails."""
     try:
-        from captcha.tiktok_detector import find_matching_pair_yolo, is_model_available
+        from .tiktok_detector import find_matching_pair_yolo, is_model_available
     except ImportError:
         logger.debug("tiktok_detector not importable; skipping YOLO tier")
         return None
 
     if not is_model_available():
         logger.info(
-            "No fine-tuned model found at captcha/models/tiktok_captcha_best.pt — "
+            "No fine-tuned model found at object_selection_captcha/models/tiktok_captcha_best.pt — "
             "falling back to classical solver. Train one with: "
-            "python -m captcha.train_tiktok_model"
+            "python -m object_selection_captcha.train_tiktok_model"
         )
         return None
 

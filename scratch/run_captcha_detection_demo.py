@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 from urllib.request import urlretrieve
 
-# Add project root so we can import captcha
+# Add project root so we can import object_selection_captcha
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
@@ -55,7 +55,7 @@ def main() -> None:
     args = parser.parse_args()
 
     from PIL import Image
-    from captcha.detector import detect_objects, resolve_prompt_labels
+    from object_selection_captcha.detector import detect_objects, resolve_prompt_labels
 
     # Load image
     path = args.image

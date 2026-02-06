@@ -1,5 +1,5 @@
 """
-Tests for captcha/tiktok_detector.py.
+Tests for object_selection_captcha.tiktok_detector.
 
 Tests the hybrid approach: YOLO for object localization + visual crop
 comparison for matching.  YOLO is mocked; the crop comparison functions
@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from captcha.tiktok_detector import (
+from object_selection_captcha.tiktok_detector import (
     TikTokDetection,
     find_matching_pair_yolo,
     detect_tiktok_objects,
@@ -142,7 +142,7 @@ class TestDetectTikTokObjects:
         ])
         mock_model.return_value = [results]
 
-        with patch("captcha.tiktok_detector._get_model", return_value=mock_model):
+        with patch("object_selection_captcha.tiktok_detector._get_model", return_value=mock_model):
             dets = detect_tiktok_objects(
                 _make_image_with_shapes(), confidence_threshold=0.25, model_path=model_path
             )
@@ -164,7 +164,7 @@ class TestDetectTikTokObjects:
         ])
         mock_model.return_value = [results]
 
-        with patch("captcha.tiktok_detector._get_model", return_value=mock_model):
+        with patch("object_selection_captcha.tiktok_detector._get_model", return_value=mock_model):
             dets = detect_tiktok_objects(
                 _make_image_with_shapes(), confidence_threshold=0.25, model_path=model_path
             )
@@ -257,7 +257,7 @@ class TestCropDetection:
 class TestFindMatchingPairYolo:
     def _mock_detect(self, detections):
         return patch(
-            "captcha.tiktok_detector.detect_tiktok_objects",
+            "object_selection_captcha.tiktok_detector.detect_tiktok_objects",
             return_value=detections,
         )
 
@@ -344,30 +344,30 @@ class TestShapeSolverYoloIntegration:
 
     def test_uses_yolo_when_available(self):
         expected = ((45, 45), (235, 85))
-        with patch("captcha.shape_solver._try_yolo", return_value=expected):
-            from captcha.shape_solver import find_matching_pair
+        with patch("object_selection_captcha.shape_solver._try_yolo", return_value=expected):
+            from object_selection_captcha.shape_solver import find_matching_pair
             result = find_matching_pair(_make_image_with_shapes())
         assert result == expected
 
     def test_falls_back_to_classical_when_yolo_unavailable(self):
         expected_classical = ((80, 200), (320, 200))
-        with patch("captcha.shape_solver._try_yolo", return_value=None):
+        with patch("object_selection_captcha.shape_solver._try_yolo", return_value=None):
             with patch(
-                "captcha.shape_solver._find_matching_pair_classical",
+                "object_selection_captcha.shape_solver._find_matching_pair_classical",
                 return_value=expected_classical,
             ):
-                from captcha.shape_solver import find_matching_pair
+                from object_selection_captcha.shape_solver import find_matching_pair
                 result = find_matching_pair(_make_image_with_shapes())
         assert result == expected_classical
 
     def test_skips_yolo_when_disabled(self):
         expected = ((80, 200), (320, 200))
         with patch(
-            "captcha.shape_solver._find_matching_pair_classical",
+            "object_selection_captcha.shape_solver._find_matching_pair_classical",
             return_value=expected,
         ) as mock_classical:
-            with patch("captcha.shape_solver._try_yolo") as mock_yolo:
-                from captcha.shape_solver import find_matching_pair
+            with patch("object_selection_captcha.shape_solver._try_yolo") as mock_yolo:
+                from object_selection_captcha.shape_solver import find_matching_pair
                 result = find_matching_pair(_make_image_with_shapes(), use_yolo=False)
         mock_yolo.assert_not_called()
         mock_classical.assert_called_once()

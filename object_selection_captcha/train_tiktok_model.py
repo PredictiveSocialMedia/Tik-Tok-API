@@ -8,20 +8,20 @@ and fine-tunes YOLOv8 on them.
 
 Usage
 -----
-Simplest (auto-detects dataset in ``captcha/`` folder)::
+Simplest (auto-detects dataset in ``object_selection_captcha/``)::
 
-    python -m captcha.train_tiktok_model
+    python -m object_selection_captcha.train_tiktok_model
 
 With explicit dataset path::
 
-    python -m captcha.train_tiktok_model --data captcha/tikdata.v1i.yolov8/data.yaml
+    python -m object_selection_captcha.train_tiktok_model --data object_selection_captcha/tikdata.v1i.yolov8/data.yaml
 
 Download from Roboflow::
 
     export ROBOFLOW_API_KEY="your_key_here"
-    python -m captcha.train_tiktok_model --roboflow
+    python -m object_selection_captcha.train_tiktok_model --roboflow
 
-After training, the best model is saved to ``captcha/models/tiktok_captcha_best.pt``.
+After training, the best model is saved to ``object_selection_captcha/models/tiktok_captcha_best.pt``.
 The solver picks it up automatically.
 
 Requirements
@@ -58,7 +58,7 @@ _DEFAULT_MODEL_NAME = "tiktok_captcha_best.pt"
 
 def _find_dataset_yaml() -> Path | None:
     """
-    Auto-detect a ``data.yaml`` inside ``captcha/`` by looking for
+    Auto-detect a ``data.yaml`` inside ``object_selection_captcha/`` by looking for
     Roboflow-style dataset directories.
     """
     for candidate in sorted(_CAPTCHA_DIR.glob("*/data.yaml")):
@@ -319,7 +319,7 @@ def main():
         print(f"Downloading dataset from Roboflow: {args.workspace}/{args.project} v{args.version}")
         yaml_path = Path(download_dataset(api_key, args.workspace, args.project, args.version)).resolve()
     else:
-        # Auto-detect dataset in captcha/ folder
+        # Auto-detect dataset in object_selection_captcha/
         found = _find_dataset_yaml()
         if found is None:
             print("ERROR: No dataset found. Provide one of:")

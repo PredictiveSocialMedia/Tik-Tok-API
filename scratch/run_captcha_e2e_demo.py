@@ -48,7 +48,7 @@ def main() -> None:
         driver.get(url)
         time.sleep(1.5)
 
-        from captcha import handle_captcha
+        from object_selection_captcha import handle_captcha
 
         solved = handle_captcha(driver, max_attempts=2, post_solve_wait=1.0)
 

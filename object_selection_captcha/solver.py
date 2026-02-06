@@ -20,7 +20,7 @@ Usage
 -----
 ::
 
-    from captcha.solver import handle_captcha
+    from object_selection_captcha import handle_captcha
 
     # inside your scraper, after page load:
     solved = handle_captcha(driver, max_attempts=3)
@@ -34,7 +34,7 @@ from typing import Optional
 
 from selenium import webdriver
 
-from captcha.browser import (
+from .browser import (
     CaptchaInfo,
     click_marker_points,
     click_points_on_element,
@@ -47,12 +47,12 @@ from captcha.browser import (
     switch_to_captcha_frame,
     switch_to_default_content,
 )
-from captcha.detector import (
+from .detector import (
     classify_tiles,
     find_click_points,
     resolve_prompt_labels,
 )
-from captcha.shape_solver import find_matching_pair
+from .shape_solver import find_matching_pair
 
 logger = logging.getLogger(__name__)
 

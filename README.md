@@ -11,6 +11,12 @@ A Python scraper for extracting data from TikTok video pages, including captions
 - 💬 Scrape top comments with like/reply counts
 - 🤖 Uses Selenium to handle dynamic content loading
 
+## Project layout
+
+- **`object_selection_captcha/`** — CAPTCHA solver package (shape-matching, grid/click, training, models). Import as `object_selection_captcha` or `from object_selection_captcha import handle_captcha`.
+- **`scratch/`** — One-off scripts and demos (e.g. `test_model_on_captcha.py`).
+- **`tests/`** — Pytest tests for scraper and captcha.
+
 ## Installation
 
 1. Install dependencies:
@@ -141,39 +147,114 @@ Scraper tests are inherently brittle (DOM/HTML can change); the suite is designe
 
 ## CAPTCHA solver (object selection)
 
-The scraper can try to **auto-solve** image-based “select all X” CAPTCHAs using a local YOLOv8 model (no external API). It is **optional** and only runs if the `captcha` package and its dependencies are installed.
+The scraper can try to **auto-solve** image-based CAPTCHAs. Support is **optional** and only runs if the `captcha` package and its dependencies are installed.
 
-### How powerful is it?
+### "Select 2 objects that are the same shape" (TikTok)
 
-| Factor | Reality |
-|--------|--------|
-| **Object coverage** | Only the **80 COCO classes** (traffic lights, buses, bicycles, cars, fire hydrants, stop signs, etc.). Prompts like “crosswalk”, “chimney”, “palm tree” have **no** mapping and will fail unless we add heuristics or CLIP. |
-| **Success rate (when it applies)** | On **grid** CAPTCHAs with clear images and a known prompt, expect roughly **50–80%** per attempt: YOLO can miss small or occluded objects, and tile boundaries / IoU thresholds can misassign. **Click** CAPTCHAs (single image, “click the X”) are often **60–90%** when the object is obvious. |
-| **TikTok specifically** | TikTok uses **slider**, **rotation**, and **object-selection** CAPTCHAs. We only solve **object-selection** (grid or click). Slider and “rotate the image” are **not** implemented; those still need manual solve or `--no-headless`. |
-| **Detection vs site layout** | Even when our model picks the right tiles, **site DOM** must match what we expect (e.g. reCAPTCHA-style containers and tile selectors). TikTok’s own CAPTCHA markup may differ; if our selectors don’t find the grid, the solver won’t run. |
+For TikTok's **shape-matching** CAPTCHA (3D letters, numbers, geometric shapes), the solver uses a **hybrid** approach:
 
-**Summary:** Useful for generic “select all traffic lights / buses / bicycles” challenges on sites that use standard patterns. Not a silver bullet; expect failures and fall back to manual solve when needed.
+1. **YOLO** (fine-tuned YOLOv11n) — locates every object and returns bounding boxes.
+2. **Deep features** (MobileNetV2) — crops each detection, extracts 1280-d embeddings, and picks the pair with highest cosine similarity (plus a foreground-mask check).
+3. **Fallback** — if the custom model is missing, it falls back to classical contour-based shape matching.
 
-### How to test it
+**Model location:** `object_selection_captcha/models/tiktok_captcha_best.pt`
 
-1. **Detection only (no browser)** – see what the model would click on any image:
+**Train your own model:**
+
+```bash
+# From project root, with dataset in object_selection_captcha/tikdata.v1i.yolo8 (or pass --data)
+python -m object_selection_captcha.train_tiktok_model --epochs 100
+```
+
+**Test the solver on images:**
+
+```bash
+# Uses dataset test images by default; pass image paths to test specific files
+python scratch/test_model_on_captcha.py --save
+# Output: scratch/test_results/*.jpg (annotated with detections and the chosen match)
+```
+
+**Run unit tests (captcha):**
+
+```bash
+# Run from repo root
+pytest tests/test_tiktok_detector.py tests/test_shape_solver.py -v
+```
+
+### Generic "select all X" (COCO)
+
+For grid/click CAPTCHAs that ask for COCO classes (e.g. traffic lights, buses), a local YOLO model is used. Object coverage is limited to **80 COCO classes**; prompts like "crosswalk" or "palm tree" have no mapping. Slider and rotation CAPTCHAs are **not** implemented — use `--no-headless` and solve those manually.
+
+**Other ways to test CAPTCHA:**
+
+1. **Detection only (no browser)** — see what the model would click on any image:
    ```bash
    python scratch/run_captcha_detection_demo.py path/to/image.jpg
-   # or with a URL:
    python scratch/run_captcha_detection_demo.py "https://example.com/grid.jpg" --output result.png
    ```
-   Prints detected objects and (optionally) saves an image with bounding boxes.
 
-2. **Full flow in browser** – local fake CAPTCHA page, solver runs end-to-end:
+2. **Full flow in browser** — local fake CAPTCHA page:
    ```bash
    python scratch/run_captcha_e2e_demo.py
    ```
-   Opens a 3×3 grid page in Chrome, runs the solver, and reports whether it “passed”.
 
-3. **Live scraper** – run the scraper; when a CAPTCHA appears it will try to solve it (disable with `--no-captcha-solve` if you prefer to solve manually):
+3. **Live scraper** — when a CAPTCHA appears it will try to solve it (disable with `--no-captcha-solve` if you prefer to solve manually):
    ```bash
    python scraper.py "https://www.tiktok.com/@user/video/123" --no-headless
    ```
+
+---
+
+## Contributing
+
+We welcome contributions. To propose a change via pull request:
+
+1. **Fork the repo**  
+   Click "Fork" on GitHub so you have your own copy (e.g. `https://github.com/your-username/Tik-Tok-API`).
+
+2. **Clone your fork and add the upstream remote**  
+   ```bash
+   git clone https://github.com/your-username/Tik-Tok-API.git
+   cd Tik-Tok-API
+   git remote add upstream https://github.com/ORIGINAL_OWNER/Tik-Tok-API.git
+   ```
+   Replace `your-username` and `ORIGINAL_OWNER` with your GitHub username and the original repo owner.
+
+3. **Create a branch**  
+   Work on a feature or fix in a dedicated branch (e.g. `git checkout -b fix-captcha-threshold`).
+
+4. **Make your changes**  
+   Edit code, add tests if needed, and run the test suite:
+   ```bash
+   pip install -r requirements.txt
+   pytest tests/ -v
+   ```
+
+5. **Commit and push**  
+   ```bash
+   git add .
+   git commit -m "Short description of the change"
+   git push origin fix-captcha-threshold
+   ```
+
+6. **Open a pull request**  
+   - Go to your fork on GitHub.
+   - You should see a prompt to "Compare & pull request" for the branch you just pushed. Click it.
+   - Or: **Branches** → select your branch → **New pull request**.
+   - Choose the **base** repo and branch (usually `main` or `master` on the original repo).
+   - Write a clear title and description (what changed, why, and how to test).
+   - Submit the pull request. Maintainers will review and may ask for edits.
+
+7. **Sync with upstream (optional)**  
+   To update your fork with the latest changes from the original repo:
+   ```bash
+   git fetch upstream
+   git checkout main   # or your default branch
+   git merge upstream/main
+   git push origin main
+   ```
+
+---
 
 ## Notes
 

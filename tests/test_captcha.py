@@ -1,5 +1,5 @@
 """
-Tests for the captcha package.
+Tests for the object_selection_captcha package.
 
 Covers pure logic (Detection, tile geometry, prompt resolution, edge density)
 without requiring a real browser or YOLO model download.
@@ -11,15 +11,15 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from captcha.detector import (
+from object_selection_captcha.detector import (
     Detection,
     classify_tiles,
     find_click_points,
     resolve_prompt_labels,
     tile_edge_density,
 )
-from captcha.browser import CaptchaInfo
-from captcha.solver import _extract_bold_word
+from object_selection_captcha.browser import CaptchaInfo
+from object_selection_captcha.solver import _extract_bold_word
 
 
 # ---------------------------------------------------------------------------
@@ -142,7 +142,7 @@ def test_classify_tiles_with_mock_detections():
     """
     fake_det = Detection("traffic light", 0.9, 10, 10, 90, 90)
 
-    with patch("captcha.detector.detect_objects", return_value=[fake_det]):
+    with patch("object_selection_captcha.detector.detect_objects", return_value=[fake_det]):
         img = _make_test_image()
         indices = classify_tiles(img, 3, 3, ["traffic light"])
 
@@ -153,7 +153,7 @@ def test_classify_tiles_centre_detection():
     """Detection in the dead centre of a 3×3 grid → tile 4."""
     fake_det = Detection("bus", 0.8, 110, 110, 190, 190)  # centre of 300×300
 
-    with patch("captcha.detector.detect_objects", return_value=[fake_det]):
+    with patch("object_selection_captcha.detector.detect_objects", return_value=[fake_det]):
         img = _make_test_image()
         indices = classify_tiles(img, 3, 3, ["bus"])
 
@@ -162,7 +162,7 @@ def test_classify_tiles_centre_detection():
 
 def test_classify_tiles_no_match():
     """No detections → empty result."""
-    with patch("captcha.detector.detect_objects", return_value=[]):
+    with patch("object_selection_captcha.detector.detect_objects", return_value=[]):
         img = _make_test_image()
         indices = classify_tiles(img, 3, 3, ["car"])
 
@@ -178,7 +178,7 @@ def test_find_click_points():
     """find_click_points returns centres of detections."""
     fake_det = Detection("bicycle", 0.7, 100, 100, 200, 200)
 
-    with patch("captcha.detector.detect_objects", return_value=[fake_det]):
+    with patch("object_selection_captcha.detector.detect_objects", return_value=[fake_det]):
         img = _make_test_image()
         points = find_click_points(img, ["bicycle"])
 
@@ -187,7 +187,7 @@ def test_find_click_points():
 
 
 def test_find_click_points_empty():
-    with patch("captcha.detector.detect_objects", return_value=[]):
+    with patch("object_selection_captcha.detector.detect_objects", return_value=[]):
         img = _make_test_image()
         points = find_click_points(img, ["airplane"])
 
@@ -214,8 +214,8 @@ def test_captcha_info_defaults():
 
 def test_handle_captcha_no_captcha():
     """When no CAPTCHA is detected, handle_captcha returns True immediately."""
-    from captcha.solver import handle_captcha
+    from object_selection_captcha.solver import handle_captcha
 
     mock_driver = MagicMock()
-    with patch("captcha.solver.detect_captcha", return_value=None):
+    with patch("object_selection_captcha.solver.detect_captcha", return_value=None):
         assert handle_captcha(mock_driver) is True

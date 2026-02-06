@@ -214,10 +214,7 @@ __marimo__/
 !package-lock.json
 downloads/
 
-# CAPTCHA model weights (large binary files)
-captcha/models/*.pt
-captcha/runs/
-captcha/datasets/
-object-selection-captcha/models/*.pt
-object-selection-captcha/runs/
-object-selection-captcha/datasets/
+# CAPTCHA model weights and training artifacts
+object_selection_captcha/models/*.pt
+object_selection_captcha/runs/
+object_selection_captcha/datasets/

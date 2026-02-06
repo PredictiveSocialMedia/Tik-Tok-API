@@ -1,5 +1,5 @@
 """
-Tests for captcha/shape_solver.py.
+Tests for object_selection_captcha.shape_solver.
 
 Uses synthetic images with known shapes on a light background (no markers)
 to verify object segmentation, feature extraction, and shape comparison.
@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from captcha.shape_solver import (
+from object_selection_captcha.shape_solver import (
     DetectedObject,
     compare_shapes,
     crop_object,

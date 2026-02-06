@@ -8,6 +8,6 @@ handle_captcha(driver, max_attempts=3) -> bool
     Returns True if the CAPTCHA was solved (or none was present).
 """
 
-from captcha.solver import handle_captcha  # noqa: F401
+from .solver import handle_captcha  # noqa: F401
 
 __all__ = ["handle_captcha"]

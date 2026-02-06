@@ -118,7 +118,7 @@ def load_tiktok_video_page(
     """
     Navigate to a TikTok video URL and return the rendered page source.
 
-    If *solve_captcha* is ``True`` (default) and the ``captcha`` package is
+    If *solve_captcha* is ``True`` (default) and the ``object_selection_captcha`` package is
     installed, any blocking CAPTCHA will be detected and solved automatically
     before returning the page source.
     """
@@ -139,14 +139,14 @@ def load_tiktok_video_page(
     # ── CAPTCHA handling ─────────────────────────────────────────────
     if solve_captcha:
         try:
-            from captcha import handle_captcha
+            from object_selection_captcha import handle_captcha
 
             solved = handle_captcha(driver, max_attempts=3)
             if solved:
                 # Re-wait for the page content after the CAPTCHA clears
                 time.sleep(1)
         except ImportError:
-            pass  # captcha package not installed – skip silently
+            pass  # object_selection_captcha not available – skip silently
 
     return driver.page_source
 

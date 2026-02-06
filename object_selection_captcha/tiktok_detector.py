@@ -18,9 +18,9 @@ Model location
 --------------
 The solver looks for the trained weights at:
 
-    captcha/models/tiktok_captcha_best.pt
+    object_selection_captcha/models/tiktok_captcha_best.pt
 
-Train with ``python -m captcha.train_tiktok_model`` (see that module for
+Train with ``python -m object_selection_captcha.train_tiktok_model`` (see that module for
 instructions).
 
 Fallback
@@ -120,7 +120,7 @@ def _get_model(model_path: Optional[str | Path] = None):
         _model_checked = True
         raise FileNotFoundError(
             f"TikTok CAPTCHA model not found at {p}. "
-            f"Train one with: python -m captcha.train_tiktok_model"
+            f"Train one with: python -m object_selection_captcha.train_tiktok_model"
         )
 
     try:
