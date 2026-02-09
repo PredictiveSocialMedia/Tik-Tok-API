@@ -216,5 +216,6 @@ downloads/
 
 # CAPTCHA model weights and training artifacts
 object_selection_captcha/models/*.pt
+funcaptcha/models/*.pt
 object_selection_captcha/runs/
 object_selection_captcha/datasets/
