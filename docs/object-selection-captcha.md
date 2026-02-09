@@ -15,7 +15,7 @@ The **object_selection_captcha** package detects and solves **image-based select
 | **Shape** (TikTok) | “Select 2 objects that are the same shape” — 3D-rendered objects on a light background. | YOLO (TikTok-trained) + contour/Hu-moment fallback |
 | **Grid** | “Select all images with X” on a 3×3 or 4×4 grid. | COCO YOLO tile classification |
 | **Click** | “Click on the X” — single image, click target object(s). | COCO YOLO + click centres |
-| **Slider / Rotate** | Drag or rotate to align. | Not auto-solved; logged, manual intervention |
+| **Slider / Rotate** | Drag puzzle piece or rotate to align. | Slider: [slider-puzzle.md](slider-puzzle.md). Rotate: manual or funcaptcha rotation. |
 
 Unknown types are tried as shape → grid → click.
 
@@ -86,5 +86,5 @@ TikTok shape model: `tiktok_captcha_best.pt` (created by `train_tiktok_model`).
 
 ## See also
 
-The four FunCaptcha puzzle docs (cycle match, rotation, quantity, dice sum): [funcaptcha-cycle-match.md](funcaptcha-cycle-match.md), [funcaptcha-rotation.md](funcaptcha-rotation.md), [funcaptcha-quantity.md](funcaptcha-quantity.md), [funcaptcha-dice-sum.md](funcaptcha-dice-sum.md).  
-Object-selection handles TikTok-style and grid/click CAPTCHAs; the funcaptcha package handles Arkose/FunCaptcha puzzle types (slider, arrows, tiles, dice).
+- [slider-puzzle.md](slider-puzzle.md) — Puzzle slider (drag the piece into the slot), e.g. TikTok.
+- FunCaptcha puzzle docs: [funcaptcha-cycle-match.md](funcaptcha-cycle-match.md), [funcaptcha-rotation.md](funcaptcha-rotation.md), [funcaptcha-quantity.md](funcaptcha-quantity.md), [funcaptcha-dice-sum.md](funcaptcha-dice-sum.md).
