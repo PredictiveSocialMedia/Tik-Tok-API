@@ -205,3 +205,17 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# TikTok Scraper outputs
+*.mp4
+*.mp3
+*.json
+!package.json
+!package-lock.json
+downloads/
+
+# CAPTCHA model weights and training artifacts
+object_selection_captcha/models/*.pt
+funcaptcha/models/*.pt
+object_selection_captcha/runs/
+object_selection_captcha/datasets/

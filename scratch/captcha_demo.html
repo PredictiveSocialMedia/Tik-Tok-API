@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CAPTCHA solver E2E demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #1a1a1a; color: #eee; }
+    .captcha-container { max-width: 400px; margin: 0 auto; padding: 16px; background: #2d2d2d; border-radius: 12px; }
+    .captcha-prompt { font-size: 16px; margin-bottom: 12px; }
+    .captcha-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .task-image { cursor: pointer; overflow: hidden; border: 2px solid #444; border-radius: 6px; }
+    .task-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .verify-btn { margin-top: 16px; padding: 10px 24px; font-size: 16px; background: #0d6efd; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .verify-btn:hover { background: #0b5ed7; }
+    .result { margin-top: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="captcha-container" id="captcha-container">
+    <div class="captcha-prompt">Select all images with <strong>cars</strong></div>
+    <div class="captcha-grid">
+      <!-- 3x3 grid; same image so YOLO detects "car" in every tile -->
+      <div class="task-image" data-tile="0"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="1"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="2"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="3"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="4"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="5"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="6"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="7"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+      <div class="task-image" data-tile="8"><img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=200&h=200&fit=crop" alt="tile" /></div>
+    </div>
+    <button type="button" class="verify-btn" id="verify-btn">Verify</button>
+    <div class="result" id="result"></div>
+  </div>
+  <script>
+    document.getElementById('verify-btn').addEventListener('click', function () {
+      document.getElementById('result').textContent = 'Verified! (demo)';
+      document.getElementById('result').style.color = '#00c853';
+    });
+  </script>
+</body>
+</html>
