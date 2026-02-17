@@ -51,9 +51,11 @@ python -m pipeline.run --max-videos 50 --no-headless
 python -m pipeline.run --top-comments 30 --replies-per-comment 5
 ```
 
-### Session / cookies
+### Login options
 
-Place saved cookies at `data/tiktok/cookies.json` to reuse a session, or run with `--no-headless` and log in manually when prompted.
+1. **Auto-login** (recommended): set env vars `TIKTOK_EMAIL` and `TIKTOK_PASSWORD`. The pipeline will log in automatically.
+2. **Cookies**: place saved cookies at `data/tiktok/cookies.json` (created after a successful login).
+3. **Manual**: run with `--no-headless` and log in in the browser when prompted.
 
 ## Testing
 

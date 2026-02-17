@@ -1,7 +1,8 @@
 """
 Comment parser: extract top N, highest-liked subset, top M replies per comment.
 
-Uses DOM (TikTok loads comments async). Maps to 3NF Comment schema.
+Uses main DOM only (TikTok loads comments async). If TikTok moves comments into
+a shadow root, we'd need to pierce it via JS (same pattern as in auth/login.py).
 """
 
 from __future__ import annotations
@@ -86,6 +87,10 @@ def parse_comments_from_dom(
     wrappers = driver.find_elements(By.CSS_SELECTOR, "div[class*='DivCommentObjectWrapper']")
     if not wrappers:
         wrappers = driver.find_elements(By.CSS_SELECTOR, "div[class*='DivCommentItemWrapper']")
+    if not wrappers:
+        logger.debug(
+            "No comment wrappers in main DOM (comments may be in shadow DOM or not loaded yet)"
+        )
 
     seen_text: set[str] = set()
     for wrapper in wrappers:

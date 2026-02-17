@@ -29,7 +29,10 @@ python -m pipeline.run --max-videos 20 --no-headless --top-comments 30
 ## Prerequisites
 
 - Chrome + ChromeDriver (or compatible)
-- Logged-in session: place cookies at `data/tiktok/cookies.json`, or run with `--no-headless` and log in manually when prompted
+- **Login**: either
+  - Set `TIKTOK_EMAIL` and `TIKTOK_PASSWORD` env vars (auto-login), or
+  - Place cookies at `data/tiktok/cookies.json` (from a previous run), or
+  - Run with `--no-headless` and log in manually when prompted
 
 ## Data Schema (3NF)
 
@@ -60,3 +63,5 @@ The pipeline detects and routes to:
 | `--data-dir` | data/tiktok | Data directory |
 | `--top-comments` | 20 | Top N comments per video |
 | `--replies-per-comment` | 5 | Top M replies per comment |
+| `TIKTOK_EMAIL` | (env) | Email or username for auto-login |
+| `TIKTOK_PASSWORD` | (env) | Password for auto-login |

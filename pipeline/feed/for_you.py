@@ -2,19 +2,20 @@
 For You feed iterator.
 
 Scrolls the feed and yields video URLs (or in-page references) for parsing.
+Uses jittered scroll amounts and delays to avoid predictable timing patterns
+that TikTok's anti-bot system could flag.
 """
 
 from __future__ import annotations
 
 import logging
 import random
-import time
 from typing import Iterator, Optional
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+
+from pipeline.browser.stealth import human_sleep
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ VIDEO_LINK_SELECTORS = [
 
 
 def _scroll(driver: WebDriver, pixels: int = 800) -> None:
+    """Scroll by a given number of pixels (randomised by caller)."""
     driver.execute_script(f"window.scrollBy(0, {pixels});")
 
 
@@ -43,7 +45,6 @@ def _get_video_urls_on_page(driver: WebDriver) -> list[str]:
                 try:
                     href = el.get_attribute("href")
                     if href and "/video/" in href and href not in seen:
-                        # Normalize: take first part (before query string)
                         base = href.split("?")[0]
                         if base not in seen:
                             seen.add(base)
@@ -66,9 +67,10 @@ def iterate_for_you_feed(
     Iterate over video URLs from the For You feed.
 
     Yields video URLs as they appear. Scrolls the page to load more.
+    All timing is jittered via ``human_sleep`` to avoid detection.
     """
     driver.get(for_you_url)
-    time.sleep(4)  # Initial load
+    human_sleep(4.0, jitter=1.5)  # Initial page load
 
     yielded: set[str] = set()
     total_yielded = 0
@@ -84,7 +86,7 @@ def iterate_for_you_feed(
             if max_videos and total_yielded >= max_videos:
                 return
 
-        # Scroll to load more
-        _scroll(driver, random.randint(600, 1000))
-        time.sleep(scroll_delay_sec + random.uniform(0, 0.5))
-        time.sleep(delay_between_scrolls_sec)
+        # Scroll to load more — randomised distance
+        _scroll(driver, random.randint(500, 1100))
+        human_sleep(scroll_delay_sec, jitter=0.8)
+        human_sleep(delay_between_scrolls_sec, jitter=0.5)

@@ -2,31 +2,40 @@
 """
 TikTok scraping pipeline — main entry point.
 
-Usage:
+Usage::
+
     python -m pipeline.run
     python -m pipeline.run --max-videos 50 --no-headless
 
 Flow:
-    1. Create browser, load cookies or wait for login
-    2. Solve captcha if present
-    3. Iterate For You feed
-    4. For each video: parse metadata + comments, store (3NF)
-    5. Checkpoint for resumability
+    1. Check rate-limit cooldown (skip if TikTok blocked us recently).
+    2. Create browser (undetected-chromedriver + stealth scripts).
+    3. Load cookies or auto-login with human-like interactions.
+    4. Solve captcha if present.
+    5. Iterate For You feed.
+    6. For each video: parse metadata + comments, store (3NF).
+    7. Checkpoint for resumability.
+
+Anti-detection measures are applied automatically via
+``pipeline.browser.driver`` (undetected-chromedriver, stealth JS) and
+``pipeline.browser.stealth`` (human typing, jittered sleeps, cooldown file).
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
-import random
 import sys
-import time
 from pathlib import Path
 
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from selenium.common.exceptions import NoSuchWindowException  # type: ignore[import-untyped]
+
+from pipeline.auth import dismiss_overlays, is_login_button_visible, login_with_credentials
 from pipeline.browser import create_driver, load_cookies, save_cookies
+from pipeline.browser.stealth import clear_rate_limit, human_sleep, is_rate_limited
 from pipeline.captcha import solve_captcha
 from pipeline.config import PipelineConfig
 from pipeline.feed import iterate_for_you_feed
@@ -43,8 +52,20 @@ logger = logging.getLogger("pipeline")
 
 def run(config: PipelineConfig) -> int:
     """
-    Run the pipeline. Returns number of videos processed.
+    Run the TikTok scraping pipeline.
+
+    Checks for an active rate-limit cooldown before starting. If a
+    cooldown is active (from a previous "Maximum attempts" block),
+    the pipeline exits immediately with ``0`` videos processed.
+
+    Returns:
+        Number of videos successfully processed.
     """
+    # --- Rate-limit guard ---
+    if is_rate_limited():
+        logger.warning("Exiting: rate-limit cooldown is active.")
+        return 0
+
     driver = create_driver(
         headless=config.headless,
         window_width=config.window_width,
@@ -52,34 +73,71 @@ def run(config: PipelineConfig) -> int:
     )
 
     storage = LocalStorage(config.db_path)
-    run_id = "for_you"  # Fixed ID for resumability
+    run_id = "for_you"
+    videos_processed = 0
 
     try:
         # ── Auth ─────────────────────────────────────────────────
         driver.get(config.for_you_url)
-        time.sleep(3)
+        human_sleep(3.0, jitter=1.0)
+        dismiss_overlays(driver)
+        human_sleep(1.5, jitter=0.5)
 
         if config.cookies_path and config.cookies_path.exists():
             load_cookies(driver, config.cookies_path)
             driver.refresh()
-            time.sleep(2)
+            human_sleep(2.0, jitter=0.5)
+            dismiss_overlays(driver)
+            human_sleep(1.0, jitter=0.3)
 
-        if "login" in driver.current_url.lower():
-            logger.info("On login page; solve captcha or log in manually (60s)...")
-            solve_captcha(driver, max_attempts=config.captcha_max_attempts)
-            time.sleep(2)
-            if "login" in driver.current_url.lower():
-                time.sleep(55)  # Wait for manual login
+        on_login_page = "login" in driver.current_url.lower()
+        login_button_visible = is_login_button_visible(driver, timeout=8.0)
+        on_foryou = (
+            "foryou" in driver.current_url.lower()
+            or "tiktok.com" in driver.current_url
+        )
+        need_login = (
+            on_login_page
+            or login_button_visible
+            or (config.has_credentials() and on_foryou)
+        )
+        logger.info(
+            "Auth check: on_login_page=%s, login_button_visible=%s, on_foryou=%s",
+            on_login_page,
+            login_button_visible,
+            on_foryou,
+        )
+
+        if need_login:
+            if config.has_credentials() and config.tiktok_email and config.tiktok_password:
+                logger.info("Login required; logging in with TIKTOK_EMAIL / TIKTOK_PASSWORD...")
+                ok = login_with_credentials(
+                    driver,
+                    email=config.tiktok_email,
+                    password=config.tiktok_password,
+                    login_url=config.login_url,
+                )
+                if ok:
+                    clear_rate_limit()
+                else:
+                    logger.warning("Auto-login failed; waiting for manual login (60s)...")
+                    human_sleep(60.0, jitter=5.0)
+            else:
+                logger.info("On login page; solve captcha or log in manually (60s)...")
+                solve_captcha(driver, max_attempts=config.captcha_max_attempts)
+                human_sleep(2.0, jitter=0.5)
+                if "login" in driver.current_url.lower():
+                    human_sleep(55.0, jitter=5.0)
+
             driver.get(config.for_you_url)
-            time.sleep(3)
+            human_sleep(3.0, jitter=1.0)
             if config.cookies_path:
                 save_cookies(driver, config.cookies_path)
 
         solve_captcha(driver, max_attempts=2)
-        time.sleep(2)
+        human_sleep(2.0, jitter=0.5)
 
         # ── Feed iteration ───────────────────────────────────────
-        videos_processed = 0
         position = 0
 
         for video_url in iterate_for_you_feed(
@@ -110,11 +168,11 @@ def run(config: PipelineConfig) -> int:
             result = parse_video_page(driver, video_url, position=position, wait_sec=6)
             if not result:
                 logger.warning("Failed to parse %s", video_url[:60])
-                time.sleep(config.delay_between_videos_sec)
+                human_sleep(config.delay_between_videos_sec, jitter=1.0)
                 continue
 
             author, video, snapshot = result
-            video_id = video.video_id  # Use canonical ID from JSON
+            video_id = video.video_id
 
             # ── Parse comments ────────────────────────────────────
             comments = parse_comments_from_dom(
@@ -133,18 +191,30 @@ def run(config: PipelineConfig) -> int:
             storage.save_checkpoint(run_id, video_id, position)
 
             videos_processed += 1
-            logger.info("Stored video %s (%d comments) [%d total]", video_id, len(comments), videos_processed)
+            logger.info(
+                "Stored video %s (%d comments) [%d total]",
+                video_id,
+                len(comments),
+                videos_processed,
+            )
 
             # ── Captcha check ─────────────────────────────────────
             solve_captcha(driver, max_attempts=1)
 
-            delay = config.delay_between_videos_sec + random.uniform(0, 1.0)
-            time.sleep(delay)
+            human_sleep(config.delay_between_videos_sec, jitter=1.0)
 
+    except NoSuchWindowException:
+        logger.warning("Browser window was closed; stopping pipeline.")
+        return videos_processed
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
     finally:
-        driver.quit()
+        try:
+            driver.quit()
+        except NoSuchWindowException:
+            pass
+        except Exception:
+            pass
 
     return videos_processed
 

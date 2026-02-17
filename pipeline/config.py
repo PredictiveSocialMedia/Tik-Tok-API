@@ -26,6 +26,9 @@ class PipelineConfig:
     cookies_path: Optional[Path] = None
     login_url: str = "https://www.tiktok.com/login"
     for_you_url: str = "https://www.tiktok.com/foryou"
+    # Credentials from env (TIKTOK_EMAIL, TIKTOK_PASSWORD) — optional; when set, auto-login
+    tiktok_email: Optional[str] = None
+    tiktok_password: Optional[str] = None
 
     # Feed
     scroll_delay_sec: float = 1.5
@@ -57,6 +60,15 @@ class PipelineConfig:
             self.db_path = self.data_dir / "scrape.db"
         self.data_dir = Path(self.data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
+        # Load credentials from env if not explicitly set
+        if self.tiktok_email is None:
+            self.tiktok_email = os.environ.get("TIKTOK_EMAIL") or None
+        if self.tiktok_password is None:
+            self.tiktok_password = os.environ.get("TIKTOK_PASSWORD") or None
+
+    def has_credentials(self) -> bool:
+        """True if both email and password are set (for auto-login)."""
+        return bool(self.tiktok_email and self.tiktok_password)
 
     @classmethod
     def from_env(cls) -> "PipelineConfig":
